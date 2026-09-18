@@ -1,14 +1,212 @@
 <!doctype html>
 <html lang="ko">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="theme-color" content="#111216" />
-  <meta name="description" content="캐릭터 방향성 라이팅 보정 · WebGL 씬 전환 · 프로필 모션 디자인 스튜디오" />
-  <title>Profile Retouch Studio 2.1</title>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Profile Retouch Studio v2.4</title>
+<style>
+:root{--bg:#101218;--panel:#171a22;--panel2:#1e2230;--line:#2c3242;--text:#eef2ff;--muted:#aeb7d4;--accent:#a78bfa;--accent2:#f9a8d4;--ok:#8ef0c7;--danger:#ff9aa7}
+*{box-sizing:border-box} body{margin:0;background:linear-gradient(180deg,#11131a,#0c0e14);color:var(--text);font:14px/1.45 system-ui,Segoe UI,Apple SD Gothic Neo,sans-serif}
+button,input,select{font:inherit} button{cursor:pointer;border:1px solid var(--line);background:var(--panel2);color:var(--text);border-radius:10px;padding:8px 12px} button.primary{background:linear-gradient(135deg,var(--accent),#7dd3fc);color:#0d1020;border:none;font-weight:700} button.ghost{background:transparent} button.small{padding:5px 8px;font-size:12px} button:disabled{opacity:.55;cursor:not-allowed}
+input[type="range"]{width:100%} input[type="color"]{width:42px;height:32px;border:none;background:none;padding:0} input[type="number"], input[type="text"], select{width:100%;background:#0f1320;border:1px solid var(--line);color:var(--text);border-radius:9px;padding:8px}
+.app{display:grid;grid-template-columns:360px 1fr 360px;min-height:100vh;gap:14px;padding:14px}
+.panel{background:rgba(23,26,34,.9);backdrop-filter:blur(6px);border:1px solid rgba(255,255,255,.06);border-radius:18px;padding:14px;overflow:auto;min-height:0}
+.panel h2{margin:0 0 10px;font-size:18px}.panel h3{margin:18px 0 10px;font-size:14px;color:#dbe3ff}.hint{color:var(--muted);font-size:12px}.toprow{display:flex;justify-content:space-between;gap:8px;align-items:center;flex-wrap:wrap}.stack{display:grid;gap:10px}.grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px}.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}.row{display:grid;gap:6px}.card{background:#121622;border:1px solid var(--line);border-radius:14px;padding:10px}.mini{font-size:12px;color:var(--muted)} .tag{display:inline-block;padding:2px 8px;border-radius:999px;background:#131a29;border:1px solid var(--line);font-size:11px;color:#d7deff}
+.previewWrap{display:grid;place-items:center;height:100%}.previewCard{width:min(70vh,72vw);max-width:780px;aspect-ratio:1;border-radius:22px;padding:18px;background:radial-gradient(circle at top,#26304a,#151925 58%,#0d1018);border:1px solid rgba(255,255,255,.08);display:grid;place-items:center;box-shadow:0 20px 60px rgba(0,0,0,.35)}
+canvas{width:100%;height:100%;display:block;border-radius:20px;background:#0b0d14}
+.layerList{display:grid;gap:8px}.layerItem{display:grid;grid-template-columns:46px 1fr auto;gap:10px;align-items:center;background:#111520;border:1px solid var(--line);border-radius:12px;padding:8px}.thumb{width:46px;height:46px;border-radius:10px;background:#0c111c;overflow:hidden;display:grid;place-items:center}.thumb img{width:100%;height:100%;object-fit:cover}.layerItem.active{outline:2px solid #8b5cf6}.layerBtns{display:grid;gap:6px}.layerBtns button{padding:4px 8px}.pillBar{display:flex;gap:8px;flex-wrap:wrap}.preset{padding:7px 10px;border-radius:999px;background:#121828;border:1px solid var(--line);font-size:12px}
+.footerBar{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.ok{color:var(--ok)} .danger{color:var(--danger)} .separator{height:1px;background:var(--line);margin:10px 0}
+label{font-size:12px;color:#dbe3ff}.rangeVal{font-size:11px;color:var(--muted)} .notice{padding:10px;border-radius:12px;background:#10182b;border:1px solid #283554;color:#d8e1ff}.exportBadge{padding:5px 9px;border-radius:999px;background:#131a29;border:1px solid var(--line);font-size:12px}
+textarea{width:100%;min-height:70px;background:#0f1320;border:1px solid var(--line);color:var(--text);border-radius:9px;padding:8px}
+@media (max-width:1400px){.app{grid-template-columns:340px 1fr}.rightPanel{grid-column:1/-1}} @media (max-width:980px){.app{grid-template-columns:1fr}.previewCard{width:100%}}
+</style>
 </head>
 <body>
-  <div id="app"></div>
-  <script type="module" src="/src/main.js"></script>
+<div class="app">
+  <aside class="panel">
+    <div class="toprow"><h2>Profile Motion Studio <span class="tag">v2.4</span></h2><button id="saveProject" class="small">프로젝트 저장</button></div>
+    <div class="hint">배경 위에 사진을 여러 장 올리고, 순서를 바꾸고, 페이드 인/아웃으로 등장시키는 1:1 모션 프로필 제작 버전입니다.</div>
+
+    <h3>1) 출력 설정</h3>
+    <div class="stack card">
+      <div class="grid2">
+        <div class="row"><label>출력 크기</label><select id="outputSize"><option value="1000">1000×1000</option><option value="1500">1500×1500</option><option value="2000" selected>2000×2000</option></select></div>
+        <div class="row"><label>FPS</label><select id="fps"><option>10</option><option selected>12</option><option>15</option><option>24</option></select></div>
+      </div>
+      <div class="row"><label>전체 길이 (초)</label><input id="duration" type="range" min="2" max="12" step="0.1" value="5"><div class="rangeVal" id="durationVal">5.0s</div></div>
+      <div class="notice">저장은 <b>MP4 우선</b>으로 시도합니다. 브라우저가 MP4 녹화를 지원하지 않으면 자동으로 WebM으로 저장합니다.</div>
+    </div>
+
+    <h3>2) 배경</h3>
+    <div class="stack card">
+      <div class="grid3">
+        <button id="bgColorBtn">단색</button>
+        <button id="bgGradBtn">그라데이션</button>
+        <button id="bgImageBtn">사진</button>
+      </div>
+      <input id="bgImageInput" type="file" accept="image/*" hidden>
+      <div class="pillBar" id="gradPresets"></div>
+      <div class="grid2">
+        <div class="row"><label>색 A</label><input id="bgColorA" type="color" value="#cbc3ff"></div>
+        <div class="row"><label>색 B</label><input id="bgColorB" type="color" value="#ffd4e6"></div>
+      </div>
+      <div class="row"><label>색 C</label><input id="bgColorC" type="color" value="#fff3fa"></div>
+      <div class="row"><label>각도</label><input id="bgAngle" type="range" min="0" max="359" value="135"><div class="rangeVal" id="bgAngleVal">135°</div></div>
+      <div class="row"><label>색조</label><input id="bgHue" type="range" min="-180" max="180" value="0"><div class="rangeVal" id="bgHueVal">0°</div></div>
+      <div class="row"><label>배경 이미지 위치/크기</label><div class="grid2"><input id="bgX" type="range" min="-100" max="100" value="0"><input id="bgY" type="range" min="-100" max="100" value="0"></div><input id="bgScale" type="range" min="50" max="200" value="100"></div>
+    </div>
+
+    <h3>3) 사진 레이어</h3>
+    <div class="stack card">
+      <div class="toprow">
+        <button id="addLayerBtn" class="primary">+ 사진 불러오기</button>
+        <input id="layerInput" type="file" accept="image/*" multiple hidden>
+        <button id="duplicateLayerBtn" class="small">복제</button>
+      </div>
+      <div class="layerList" id="layerList"></div>
+    </div>
+  </aside>
+
+  <main class="panel previewWrap">
+    <div class="previewCard">
+      <canvas id="preview" width="800" height="800"></canvas>
+    </div>
+    <div class="footerBar" style="margin-top:12px;width:min(70vh,72vw);max-width:780px;justify-content:space-between">
+      <div class="footerBar">
+        <button id="playBtn" class="primary">▶ 재생</button>
+        <button id="pauseBtn">⏸ 정지</button>
+        <input id="playhead" type="range" min="0" max="5" step="0.01" value="0" style="width:280px">
+        <span id="timeText" class="exportBadge">0.00s / 5.00s</span>
+      </div>
+      <div class="footerBar">
+        <span id="exportInfo" class="exportBadge">MP4 우선 · 1:1</span>
+        <button id="exportBtn" class="primary">MP4 저장</button>
+      </div>
+    </div>
+  </main>
+
+  <aside class="panel rightPanel">
+    <h2>선택 항목 편집</h2>
+    <div id="editorEmpty" class="notice">왼쪽에서 사진 레이어를 선택하면 위치, 크기, 순서, 페이드 인/아웃, 회전 등을 조절할 수 있습니다.</div>
+    <div id="layerEditor" style="display:none" class="stack">
+      <div class="card stack">
+        <div class="toprow"><b id="layerTitle">레이어</b><span class="mini" id="layerOrderLabel"></span></div>
+        <div class="grid2">
+          <button id="moveUpBtn">▲ 위로</button><button id="moveDownBtn">▼ 아래로</button>
+        </div>
+        <button id="deleteLayerBtn" class="ghost">레이어 삭제</button>
+      </div>
+      <div class="card stack">
+        <div class="grid2">
+          <div class="row"><label>X</label><input id="lx" type="range" min="-100" max="100" value="0"></div>
+          <div class="row"><label>Y</label><input id="ly" type="range" min="-100" max="100" value="0"></div>
+        </div>
+        <div class="grid2">
+          <div class="row"><label>크기</label><input id="lscale" type="range" min="10" max="180" value="60"></div>
+          <div class="row"><label>기본 회전</label><input id="lrot" type="range" min="-180" max="180" value="0"></div>
+        </div>
+        <div class="row"><label>투명도</label><input id="lopacity" type="range" min="0" max="100" value="100"></div>
+      </div>
+      <div class="card stack">
+        <b>타이밍</b>
+        <div class="grid2">
+          <div class="row"><label>시작 시간</label><input id="lstart" type="range" min="0" max="5" step="0.01" value="0"></div>
+          <div class="row"><label>끝 시간</label><input id="lend" type="range" min="0.2" max="5" step="0.01" value="5"></div>
+        </div>
+        <div class="grid2">
+          <div class="row"><label>등장 효과</label><select id="linEffect"></select></div>
+          <div class="row"><label>퇴장 효과</label><select id="loutEffect"></select></div>
+        </div>
+        <div class="grid2">
+          <div class="row"><label>등장 길이</label><input id="linDur" type="range" min="0.1" max="2" step="0.05" value="0.5"></div>
+          <div class="row"><label>퇴장 길이</label><input id="loutDur" type="range" min="0.1" max="2" step="0.05" value="0.5"></div>
+        </div>
+      </div>
+      <div class="card stack">
+        <b>레이어 회전 애니메이션</b>
+        <div class="grid2">
+          <button id="layerSpinToggle">회전 꺼짐</button>
+          <select id="layerSpinDir"><option value="1">시계 방향</option><option value="-1">반시계 방향</option></select>
+        </div>
+        <div class="row"><label>회전 속도 (deg/s)</label><input id="layerSpinSpeed" type="range" min="0" max="180" value="0"></div>
+      </div>
+    </div>
+
+    <h3>4) 원형 프레임 PNG</h3>
+    <div class="card stack">
+      <div class="toprow"><button id="frameUploadBtn">+ 프레임 PNG 업로드</button><input id="frameInput" type="file" accept="image/png,image/webp,image/*" hidden><button id="frameClearBtn" class="small">제거</button></div>
+      <div class="grid2">
+        <div class="row"><label>프레임 크기</label><input id="frameScale" type="range" min="60" max="140" value="100"></div>
+        <div class="row"><label>프레임 투명도</label><input id="frameOpacity" type="range" min="0" max="100" value="100"></div>
+      </div>
+      <div class="grid2">
+        <div class="row"><label>회전 애니메이션</label><button id="frameRotateToggle">회전 꺼짐</button></div>
+        <div class="row"><label>방향</label><select id="frameRotateDir"><option value="1">시계 방향</option><option value="-1">반시계 방향</option></select></div>
+      </div>
+      <div class="row"><label>회전 속도 (deg/s)</label><input id="frameRotateSpeed" type="range" min="0" max="180" value="24"></div>
+      <div class="hint">투명 배경의 원형 프레임 PNG를 올리면 가장 위 레이어처럼 얹어집니다.</div>
+    </div>
+  </aside>
+</div>
+<script>
+const EFFECTS=[
+  ['none','없음'],['fade','페이드'],['zoom','줌 인'],['pop','팝'],['slide-up','아래에서 올라옴'],['slide-down','위에서 내려옴'],['slide-left','오른쪽에서 들어옴'],['slide-right','왼쪽에서 들어옴'],['blur','블러 페이드'],['rotate-pop','회전 팝']
+]
+const GRADIENT_PRESETS=[
+  ['파스텔 라벤더',['#cbc3ff','#f0d6ff','#fff2fb',135]],['민트 크림',['#d8fff3','#caf4ff','#f3edff',120]],['코튼 캔디',['#ffd6ef','#ffdfe0','#fff7d8',135]],['피치 밀크',['#ffe0d2','#ffeecf','#fff9f2',150]],['스카이 셔벗',['#d7e8ff','#e6deff','#ffe3f0',110]],['블루베리 요거트',['#cbd6ff','#e8d8ff','#fff3fd',135]],['사쿠라 미스트',['#ffd9e8','#ffe9f3','#fffefc',160]]
+]
+const state={
+  outputSize:2000,fps:12,duration:5,playhead:0,playing:false,
+  background:{mode:'gradient',colorA:'#cbc3ff',colorB:'#ffd4e6',colorC:'#fff3fa',angle:135,hue:0,imageUrl:null,x:0,y:0,scale:100,preset:'파스텔 라벤더'},
+  layers:[],selectedLayerId:null,
+  frame:{url:null,scale:100,opacity:100,rotate:false,rotateSpeed:24,rotateDir:1}
+}
+const cache=new Map();
+const $=s=>document.querySelector(s); const preview=$('#preview'); const pctx=preview.getContext('2d'); let raf=0; let lastTs=0;
+function uid(){return Math.random().toString(36).slice(2,10)}
+function clamp(v,a,b){return Math.max(a,Math.min(b,v))}
+function easeOutCubic(t){return 1-Math.pow(1-t,3)}
+function easeInCubic(t){return t*t*t}
+function deepCopy(v){return JSON.parse(JSON.stringify(v))}
+function loadImage(url){return new Promise((res,rej)=>{if(cache.has(url))return res(cache.get(url)); const img=new Image(); img.onload=()=>{cache.set(url,img);res(img)}; img.onerror=rej; img.src=url})}
+function fileToDataURL(file){return new Promise((res,rej)=>{const fr=new FileReader(); fr.onload=()=>res(fr.result); fr.onerror=rej; fr.readAsDataURL(file)})}
+function renderSelectOptions(){const a=$('#linEffect'),b=$('#loutEffect'); a.innerHTML=b.innerHTML=''; for(const [v,l] of EFFECTS){a.append(new Option(l,v)); b.append(new Option(l,v))}}
+function setupGradientPresets(){const wrap=$('#gradPresets'); GRADIENT_PRESETS.forEach(([name,[a,b,c,ang]])=>{const bt=document.createElement('button'); bt.className='preset'; bt.textContent=name; bt.onclick=()=>{Object.assign(state.background,{mode:'gradient',colorA:a,colorB:b,colorC:c,angle:ang,preset:name}); syncBgInputs(); draw()}; wrap.append(bt)})}
+function addLayerFromUrl(name,url){const layer={id:uid(),name,x:0,y:0,scale:60,rotation:0,opacity:100,start:0,end:state.duration,inEffect:'fade',outEffect:'fade',inDur:.6,outDur:.6,spin:false,spinSpeed:0,spinDir:1,url}; state.layers.push(layer); state.selectedLayerId=layer.id; refreshLayerList(); syncLayerEditor(); draw()}
+function getSelectedLayer(){return state.layers.find(x=>x.id===state.selectedLayerId)||null}
+function moveLayer(dir){const idx=state.layers.findIndex(x=>x.id===state.selectedLayerId); if(idx<0) return; const ni=clamp(idx+dir,0,state.layers.length-1); if(idx===ni)return; const [m]=state.layers.splice(idx,1); state.layers.splice(ni,0,m); refreshLayerList(); draw(); syncLayerEditor()}
+function refreshLayerList(){const wrap=$('#layerList'); wrap.innerHTML=''; if(!state.layers.length){wrap.innerHTML='<div class="mini">아직 사진 레이어가 없습니다.</div>'; return;} state.layers.forEach((l,i)=>{const item=document.createElement('div'); item.className='layerItem'+(l.id===state.selectedLayerId?' active':''); item.onclick=()=>{state.selectedLayerId=l.id; refreshLayerList(); syncLayerEditor()}; const thumb=document.createElement('div'); thumb.className='thumb'; const img=document.createElement('img'); img.src=l.url; thumb.append(img); const info=document.createElement('div'); info.innerHTML=`<b>${escapeHtml(l.name)}</b><div class="mini">${i+1}번째 · ${l.start.toFixed(1)}s ~ ${l.end.toFixed(1)}s</div>`; const btns=document.createElement('div'); btns.className='layerBtns'; btns.innerHTML='<button class="small">▲</button><button class="small">▼</button>'; btns.children[0].onclick=(e)=>{e.stopPropagation(); state.selectedLayerId=l.id; moveLayer(-1)}; btns.children[1].onclick=(e)=>{e.stopPropagation(); state.selectedLayerId=l.id; moveLayer(1)}; item.append(thumb,info,btns); wrap.append(item)})}
+function escapeHtml(s){return s.replace(/[&<>\"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]))}
+function syncBgInputs(){ $('#outputSize').value=state.outputSize; $('#fps').value=state.fps; $('#duration').value=state.duration; $('#durationVal').textContent=state.duration.toFixed(1)+'s'; $('#playhead').max=state.duration; $('#bgColorA').value=state.background.colorA; $('#bgColorB').value=state.background.colorB; $('#bgColorC').value=state.background.colorC; $('#bgAngle').value=state.background.angle; $('#bgAngleVal').textContent=state.background.angle+'°'; $('#bgHue').value=state.background.hue; $('#bgHueVal').textContent=state.background.hue+'°'; $('#bgX').value=state.background.x; $('#bgY').value=state.background.y; $('#bgScale').value=state.background.scale; $('#timeText').textContent=`${state.playhead.toFixed(2)}s / ${state.duration.toFixed(2)}s`; $('#exportInfo').textContent=`MP4 우선 · ${state.outputSize}×${state.outputSize}`; $('#frameScale').value=state.frame.scale; $('#frameOpacity').value=state.frame.opacity; $('#frameRotateSpeed').value=state.frame.rotateSpeed; $('#frameRotateDir').value=String(state.frame.rotateDir); $('#frameRotateToggle').textContent=state.frame.rotate?'회전 켜짐':'회전 꺼짐'; }
+function syncLayerEditor(){const l=getSelectedLayer(); $('#editorEmpty').style.display=l?'none':'block'; $('#layerEditor').style.display=l?'grid':'none'; if(!l)return; $('#layerTitle').textContent=l.name; $('#layerOrderLabel').textContent=`총 ${state.layers.length}개 중 ${state.layers.findIndex(x=>x.id===l.id)+1}번째`; $('#lx').value=l.x; $('#ly').value=l.y; $('#lscale').value=l.scale; $('#lrot').value=l.rotation; $('#lopacity').value=l.opacity; $('#lstart').max=$('#lend').max=state.duration; $('#lstart').value=l.start; $('#lend').value=l.end; $('#linEffect').value=l.inEffect; $('#loutEffect').value=l.outEffect; $('#linDur').value=l.inDur; $('#loutDur').value=l.outDur; $('#layerSpinToggle').textContent=l.spin?'회전 켜짐':'회전 꺼짐'; $('#layerSpinSpeed').value=l.spinSpeed; $('#layerSpinDir').value=String(l.spinDir)}
+function bind(){renderSelectOptions(); setupGradientPresets(); syncBgInputs(); refreshLayerList();
+$('#outputSize').onchange=e=>{state.outputSize=Number(e.target.value); syncBgInputs()}; $('#fps').onchange=e=>state.fps=Number(e.target.value); $('#duration').oninput=e=>{state.duration=Number(e.target.value); for(const l of state.layers){l.end=Math.min(l.end,state.duration)} $('#durationVal').textContent=state.duration.toFixed(1)+'s'; $('#playhead').max=state.duration; syncLayerEditor(); draw()};
+$('#bgColorBtn').onclick=()=>{state.background.mode='color'; draw()}; $('#bgGradBtn').onclick=()=>{state.background.mode='gradient'; draw()}; $('#bgImageBtn').onclick=()=>$('#bgImageInput').click(); $('#bgImageInput').onchange=async e=>{const f=e.target.files[0]; if(!f)return; state.background.mode='image'; state.background.imageUrl=await fileToDataURL(f); draw()};
+['A','B','C'].forEach(k=>$('#bgColor'+k).oninput=e=>{state.background['color'+k]=e.target.value; draw()}); $('#bgAngle').oninput=e=>{state.background.angle=Number(e.target.value); $('#bgAngleVal').textContent=state.background.angle+'°'; draw()}; $('#bgHue').oninput=e=>{state.background.hue=Number(e.target.value); $('#bgHueVal').textContent=state.background.hue+'°'; draw()}; $('#bgX').oninput=e=>{state.background.x=Number(e.target.value); draw()}; $('#bgY').oninput=e=>{state.background.y=Number(e.target.value); draw()}; $('#bgScale').oninput=e=>{state.background.scale=Number(e.target.value); draw()};
+$('#addLayerBtn').onclick=()=>$('#layerInput').click(); $('#layerInput').onchange=async e=>{for(const f of [...e.target.files]) addLayerFromUrl(f.name, await fileToDataURL(f)); e.target.value=''}; $('#duplicateLayerBtn').onclick=()=>{const l=getSelectedLayer(); if(!l)return; const c=deepCopy(l); c.id=uid(); c.name=l.name+' 복제'; state.layers.push(c); state.selectedLayerId=c.id; refreshLayerList(); syncLayerEditor(); draw()};
+$('#moveUpBtn').onclick=()=>moveLayer(-1); $('#moveDownBtn').onclick=()=>moveLayer(1); $('#deleteLayerBtn').onclick=()=>{const id=state.selectedLayerId; state.layers=state.layers.filter(x=>x.id!==id); state.selectedLayerId=state.layers[0]?.id||null; refreshLayerList(); syncLayerEditor(); draw()};
+const map={lx:'x',ly:'y',lscale:'scale',lrot:'rotation',lopacity:'opacity',lstart:'start',lend:'end',linEffect:'inEffect',loutEffect:'outEffect',linDur:'inDur',loutDur:'outDur'}; for(const [id,key] of Object.entries(map)){const el=$('#'+id); el.oninput=()=>{const l=getSelectedLayer(); if(!l)return; l[key]=el.type==='range'||el.type==='number'?Number(el.value):el.value; if(key==='start'&&l.start>l.end-.05)l.start=l.end-.05; if(key==='end'&&l.end<l.start+.05)l.end=l.start+.05; syncLayerEditor(); refreshLayerList(); draw()}; if(el.tagName==='SELECT') el.onchange=el.oninput}
+$('#layerSpinToggle').onclick=()=>{const l=getSelectedLayer(); if(!l)return; l.spin=!l.spin; syncLayerEditor(); draw()}; $('#layerSpinSpeed').oninput=e=>{const l=getSelectedLayer(); if(!l)return; l.spinSpeed=Number(e.target.value); draw()}; $('#layerSpinDir').onchange=e=>{const l=getSelectedLayer(); if(!l)return; l.spinDir=Number(e.target.value); draw()};
+$('#frameUploadBtn').onclick=()=>$('#frameInput').click(); $('#frameInput').onchange=async e=>{const f=e.target.files[0]; if(!f)return; state.frame.url=await fileToDataURL(f); draw()}; $('#frameClearBtn').onclick=()=>{state.frame.url=null; draw()}; $('#frameScale').oninput=e=>{state.frame.scale=Number(e.target.value); draw()}; $('#frameOpacity').oninput=e=>{state.frame.opacity=Number(e.target.value); draw()}; $('#frameRotateToggle').onclick=()=>{state.frame.rotate=!state.frame.rotate; syncBgInputs(); draw()}; $('#frameRotateSpeed').oninput=e=>{state.frame.rotateSpeed=Number(e.target.value); draw()}; $('#frameRotateDir').onchange=e=>{state.frame.rotateDir=Number(e.target.value); draw()};
+$('#playBtn').onclick=()=>{state.playing=true; if(!raf){lastTs=performance.now(); raf=requestAnimationFrame(loop)}}; $('#pauseBtn').onclick=()=>{state.playing=false}; $('#playhead').oninput=e=>{state.playhead=Number(e.target.value); syncBgInputs(); draw()};
+$('#exportBtn').onclick=exportVideo; $('#saveProject').onclick=saveProject;
+}
+async function drawScene(ctx,size,time){ctx.clearRect(0,0,size,size); await drawBackground(ctx,size,time); for(const l of state.layers){ await drawLayer(ctx,size,l,time)} await drawFrame(ctx,size,time)}
+async function drawBackground(ctx,size,time){const bg=state.background; ctx.save(); if(bg.mode==='image' && bg.imageUrl){ try{const img=await loadImage(bg.imageUrl); ctx.filter=`hue-rotate(${bg.hue}deg)`; const scale=(bg.scale||100)/100; const base=Math.max(size/(img.naturalWidth||img.width), size/(img.naturalHeight||img.height)); const dw=(img.naturalWidth||img.width)*base*scale, dh=(img.naturalHeight||img.height)*base*scale; const x=(size-dw)/2 + bg.x/100*size*0.5; const y=(size-dh)/2 + bg.y/100*size*0.5; ctx.drawImage(img,x,y,dw,dh)}catch{ctx.fillStyle='#1a1e2d'; ctx.fillRect(0,0,size,size)}} else if(bg.mode==='color'){ctx.filter=`hue-rotate(${bg.hue}deg)`; ctx.fillStyle=bg.colorA; ctx.fillRect(0,0,size,size)} else {const a=bg.angle*Math.PI/180, cx=size/2, cy=size/2, len=Math.abs(size*Math.cos(a))+Math.abs(size*Math.sin(a)); const g=ctx.createLinearGradient(cx-Math.cos(a)*len/2,cy-Math.sin(a)*len/2,cx+Math.cos(a)*len/2,cy+Math.sin(a)*len/2); g.addColorStop(0,bg.colorA); g.addColorStop(.55,bg.colorB); g.addColorStop(1,bg.colorC); ctx.filter=`hue-rotate(${bg.hue}deg)`; ctx.fillStyle=g; ctx.fillRect(0,0,size,size)} ctx.restore()}
+function composeState(layer,time,size){if(time<layer.start || time>layer.end) return {visible:false}; let opacity=(layer.opacity||100)/100, scale=layer.scale/100, dx=layer.x/100*size*.5, dy=layer.y/100*size*.5, rot=layer.rotation*Math.PI/180; let blur=0; const inP=clamp((time-layer.start)/Math.max(.001,layer.inDur),0,1), outP=clamp((layer.end-time)/Math.max(.001,layer.outDur),0,1); if(time<layer.start+layer.inDur) applyEffect(layer.inEffect,inP,true); if(time>layer.end-layer.outDur) applyEffect(layer.outEffect,outP,false);
+if(layer.spin) rot += (layer.spinSpeed||0)*(layer.spinDir||1)*time*Math.PI/180; return {visible:true,opacity,scale,dx,dy,rot,blur};
+function applyEffect(effect,p,isIn){if(effect==='none') return; const q=isIn?easeOutCubic(p):easeInCubic(p); const rev=isIn?q:outP; if(effect==='fade'){opacity*=isIn?q:outP} else if(effect==='zoom'){opacity*=isIn?q:outP; scale*=isIn?(0.75+0.25*q):(0.75+0.25*outP)} else if(effect==='pop'){opacity*=isIn?q:outP; const sc=isIn?(.55+0.45*q+Math.sin(q*Math.PI)*.08):(.55+0.45*outP); scale*=sc} else if(effect==='slide-up'){opacity*=isIn?q:outP; dy += (isIn?(1-q):(1-outP))*size*.15} else if(effect==='slide-down'){opacity*=isIn?q:outP; dy -= (isIn?(1-q):(1-outP))*size*.15} else if(effect==='slide-left'){opacity*=isIn?q:outP; dx += (isIn?(1-q):(1-outP))*size*.15} else if(effect==='slide-right'){opacity*=isIn?q:outP; dx -= (isIn?(1-q):(1-outP))*size*.15} else if(effect==='blur'){opacity*=isIn?q:outP; blur=(isIn?(1-q):(1-outP))*18} else if(effect==='rotate-pop'){opacity*=isIn?q:outP; scale*=isIn?(.65+.35*q):(.65+.35*outP); rot += (isIn?(1-q):(1-outP))*Math.PI*.7}}
+}
+async function drawLayer(ctx,size,layer,time){const st=composeState(layer,time,size); if(!st.visible)return; const img=await loadImage(layer.url); const iw=img.naturalWidth||img.width, ih=img.naturalHeight||img.height; const fit=size*0.75; const base=fit/Math.max(iw,ih); const dw=iw*base*st.scale, dh=ih*base*st.scale; ctx.save(); ctx.translate(size/2+st.dx,size/2+st.dy); ctx.rotate(st.rot); ctx.globalAlpha=st.opacity; if(st.blur) ctx.filter=`blur(${st.blur}px)`; ctx.drawImage(img,-dw/2,-dh/2,dw,dh); ctx.restore()}
+async function drawFrame(ctx,size,time){if(!state.frame.url)return; const img=await loadImage(state.frame.url); const sc=(state.frame.scale||100)/100; const sw=size*sc, sh=size*sc; const rot=(state.frame.rotate?(state.frame.rotateSpeed||0)*(state.frame.rotateDir||1)*time:0)*Math.PI/180; ctx.save(); ctx.translate(size/2,size/2); ctx.rotate(rot); ctx.globalAlpha=(state.frame.opacity||100)/100; ctx.drawImage(img,-sw/2,-sh/2,sw,sh); ctx.restore()}
+async function draw(){await drawScene(pctx,preview.width,state.playhead); syncBgInputs()}
+function loop(ts){if(!state.playing){raf=0; return} const dt=(ts-lastTs)/1000; lastTs=ts; state.playhead+=dt; if(state.playhead>state.duration) state.playhead=0; $('#playhead').value=state.playhead; draw(); raf=requestAnimationFrame(loop)}
+function saveProject(){const blob=new Blob([JSON.stringify({state},null,2)],{type:'application/json'}); download(blob,'profile-motion-v2.4-project.json')}
+function download(blob,name){const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=name; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),1500)}
+async function exportVideo(){const btn=$('#exportBtn'); btn.disabled=true; btn.textContent='내보내는 중...'; const size=state.outputSize; const fps=state.fps; const duration=state.duration; const canvas=document.createElement('canvas'); canvas.width=canvas.height=size; const ctx=canvas.getContext('2d'); const stream=canvas.captureStream(fps); const mimeCandidates=['video/mp4;codecs=h264','video/mp4','video/webm;codecs=vp9','video/webm']; const mime=mimeCandidates.find(m=>window.MediaRecorder && MediaRecorder.isTypeSupported(m)) || ''; const chunks=[]; let recorder; try{ recorder=new MediaRecorder(stream,mime?{mimeType:mime,videoBitsPerSecond:8_000_000}:{videoBitsPerSecond:8_000_000}); }catch(e){ alert('이 브라우저는 영상 녹화를 지원하지 않습니다.'); btn.disabled=false; btn.textContent='MP4 저장'; return }
+ recorder.ondataavailable=e=>{if(e.data.size)chunks.push(e.data)}; recorder.onstop=()=>{const type=chunks[0]?.type||mime||'video/webm'; const ext=type.includes('mp4')?'mp4':'webm'; download(new Blob(chunks,{type}),`profile-motion-v2.4.${ext}`); btn.disabled=false; btn.textContent='MP4 저장';}; recorder.start(); const start=performance.now(); const interval=1000/fps; let frame=0; const totalFrames=Math.ceil(duration*fps);
+ async function step(){const t=frame/fps; await drawScene(ctx,size,t); frame++; if(frame<=totalFrames){ setTimeout(step,interval)} else {recorder.stop()}} step()}
+bind(); draw();
+</script>
 </body>
 </html>
