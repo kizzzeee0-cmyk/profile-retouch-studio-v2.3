@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Profile Retouch Studio v2.8</title>
+<title>Profile Retouch Studio v2.9</title>
 <style>
 :root{--bg:#0d1018;--panel:#171b25;--panel2:#1d2331;--line:#30384c;--text:#eef3ff;--muted:#acb8d8;--accent:#a78bfa;--accent2:#f9a8d4;--ok:#8ef0c7;--warn:#ffd59a}
 *{box-sizing:border-box}body{margin:0;background:linear-gradient(180deg,#11131b,#0b0d13);color:var(--text);font:14px/1.45 system-ui,-apple-system,Segoe UI,Apple SD Gothic Neo,sans-serif}button,input,select,textarea{font:inherit}button{cursor:pointer;border:1px solid var(--line);background:var(--panel2);color:var(--text);border-radius:10px;padding:8px 12px}button.primary{background:linear-gradient(135deg,var(--accent),#7dd3fc);color:#0a0f1d;border:none;font-weight:800}button.soft{background:#131a28}button.small{padding:5px 8px;font-size:12px}button:disabled{opacity:.55;cursor:not-allowed}input[type="range"],input[type="text"],input[type="number"],select,textarea{width:100%}input[type="text"],input[type="number"],select,textarea{background:#0f1320;border:1px solid var(--line);color:var(--text);border-radius:9px;padding:8px}input[type="color"]{width:42px;height:32px;padding:0;border:none;background:none}.app{display:grid;grid-template-columns:360px 1fr 370px;gap:14px;min-height:100vh;padding:14px}.panel{background:rgba(23,27,37,.92);backdrop-filter:blur(6px);border:1px solid rgba(255,255,255,.07);border-radius:18px;padding:14px;overflow:auto;min-height:0}.panel h2{margin:0 0 10px;font-size:18px}.panel h3{margin:18px 0 10px;font-size:14px;color:#dfe6ff}.toprow{display:flex;gap:8px;justify-content:space-between;align-items:center;flex-wrap:wrap}.stack{display:grid;gap:10px}.card{background:#121722;border:1px solid var(--line);border-radius:14px;padding:10px}.grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px}.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}.grid4{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px}.row{display:grid;gap:6px}.hint,.mini{font-size:12px;color:var(--muted)}.tag{display:inline-block;padding:3px 9px;border-radius:999px;background:#131a29;border:1px solid var(--line);font-size:11px;color:#d7deff}.notice{padding:10px;border-radius:12px;background:#10182b;border:1px solid #283554;color:#d8e1ff}.success{color:var(--ok)}.warn{color:var(--warn)}
@@ -16,8 +16,8 @@
 <body>
 <div class="app">
   <aside class="panel">
-    <div class="toprow"><h2>Profile Motion Studio <span class="tag">v2.8</span></h2><button id="saveProject" class="small">프로젝트 저장</button></div>
-    <div class="hint">여러 장의 사진 + 움직이는 장식 + PNG 장식을 겹쳐서 1:1 프로필 모션 영상을 만드는 버전입니다. v2.8에서는 60FPS 출력 옵션과 Undo 기능을 추가하고, 상단 고정 툴바를 유지하면서 더 부드러운 영상 추출이 가능하도록 개선했습니다.</div>
+    <div class="toprow"><h2>Profile Motion Studio <span class="tag">v2.9</span></h2><button id="saveProject" class="small">프로젝트 저장</button></div>
+    <div class="hint">여러 장의 사진 + 움직이는 장식 + PNG 장식을 겹쳐서 1:1 프로필 모션 영상을 만드는 버전입니다. v2.9에서는 저장 시간축을 실제 시계 기준으로 다시 설계해 5초 영상이 5초로 유지되고, 저장 후 움직임 속도가 느려지는 문제를 수정했습니다.</div>
 
     <h3>1) 출력 설정</h3>
     <div class="stack card">
@@ -79,7 +79,7 @@
       <input id="playhead" type="range" min="0" max="5" step="0.01" value="0" style="width:100%">
     </div>
     <div class="previewCard"><canvas id="preview" width="900" height="900"></canvas></div>
-    <div class="notice" style="width:min(70vh,70vw);max-width:780px">v2.8은 <b>출력 해상도와 동일한 내부 캔버스</b>로 미리보기를 만든 뒤 화면에 축소 표시합니다. 저장도 같은 렌더 함수를 사용하고, 이제 60FPS 출력과 Undo까지 지원해 더 부드럽고 안정적으로 작업할 수 있습니다.</div>
+    <div class="notice" style="width:min(70vh,70vw);max-width:780px">v2.9은 <b>출력 해상도와 동일한 내부 캔버스</b>와 동일 렌더 함수를 유지하면서, 저장 시간을 프레임 대기시간이 아니라 실제 경과시간 기준으로 계산합니다. 그래서 5초 영상이 10초로 늘어나거나 움직임이 2배 느려지는 문제를 막습니다.</div>
   </main>
 
   <aside class="panel rightPanel">
@@ -180,7 +180,7 @@ const cache=new Map();
 const $=s=>document.querySelector(s); const preview=$('#preview');
 function get2d(canvas,alpha=false){try{return canvas.getContext('2d',{alpha,colorSpace:'srgb',desynchronized:false})||canvas.getContext('2d')}catch{return canvas.getContext('2d')}}
 const pctx=get2d(preview,false); pctx.imageSmoothingEnabled=true; pctx.imageSmoothingQuality='high';
-const masterCanvas=document.createElement('canvas'); let masterCtx=get2d(masterCanvas,false); let renderForExport=false;
+const masterCanvas=document.createElement('canvas'); let masterCtx=get2d(masterCanvas,false); let renderForExport=false; let isExporting=false;
 let raf=0,lastTs=0;
 const undoStack=[]; const UNDO_LIMIT=80;
 function uid(){return Math.random().toString(36).slice(2,10)}
@@ -244,7 +244,7 @@ function bindUI(){
   for(const [id,key] of Object.entries(spriteMap)){ const el=$('#'+id); const fn=()=>{const l=getSelectedLayer(); if(!l||l.type!=='sprite')return; pushUndo(); l[key]=el.type==='color'||el.tagName==='SELECT'?el.value:Number(el.value); draw()}; el.oninput=fn; el.onchange=fn }
   $('#frameUploadBtn').onclick=()=>$('#frameInput').click(); $('#frameInput').onchange=async e=>{const f=e.target.files[0]; if(!f)return; pushUndo(); state.frame.url=await fileToDataURL(f); draw(); e.target.value=''}; $('#frameClearBtn').onclick=()=>{pushUndo(); state.frame.url=null; draw()}; $('#frameScale').oninput=e=>{pushUndo(); state.frame.scale=Number(e.target.value); draw()}; $('#frameOpacity').oninput=e=>{pushUndo(); state.frame.opacity=Number(e.target.value); draw()}; $('#frameRotateToggle').onclick=()=>{pushUndo(); state.frame.rotate=!state.frame.rotate; syncStaticInputs(); draw()}; $('#frameRotateSpeed').oninput=e=>{pushUndo(); state.frame.rotateSpeed=Number(e.target.value); draw()}; $('#frameRotateDir').onchange=e=>{pushUndo(); state.frame.rotateDir=Number(e.target.value); draw()};
   $('#playBtn').onclick=()=>{state.playing=true; if(!raf){lastTs=performance.now(); raf=requestAnimationFrame(loop)}}; $('#pauseBtn').onclick=()=>{state.playing=false}; $('#playhead').oninput=e=>{state.playhead=Number(e.target.value); syncStaticInputs(); draw()};
-  $('#exportBtn').onclick=exportVideo; $('#saveProject').onclick=()=>download(new Blob([JSON.stringify({state},null,2)],{type:'application/json'}),'profile-motion-v2.8-project.json');
+  $('#exportBtn').onclick=exportVideo; $('#saveProject').onclick=()=>download(new Blob([JSON.stringify({state},null,2)],{type:'application/json'}),'profile-motion-v2.9-project.json');
   bindUndoGuards('input[type=range], input[type=number], input[type=color], select, textarea');
   document.addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='z'){e.preventDefault(); undoAction()}})
 }
@@ -290,7 +290,7 @@ function syncCompass(rootId,angle){const root=$(rootId);if(!root)return;for(cons
 function renderTimeline(){const wrap=$('#timelineList'); if(!wrap)return; wrap.innerHTML=''; if(!state.layers.length){wrap.innerHTML='<div class="mini">타임라인에 표시할 레이어가 없습니다.</div>'; return;} for(const l of state.layers){const row=document.createElement('div');row.className='timelineRow';const name=document.createElement('div');name.className='timelineName';name.textContent=l.name;const track=document.createElement('div');track.className='timelineTrack';track.onclick=()=>{state.selectedLayerId=l.id;refreshLayerList();syncEditor();draw()}; const bar=document.createElement('div');bar.className='timelineBar '+(l.type==='decor'?'decor':l.type==='sprite'?'sprite':'photo'); bar.style.left=(l.start/state.duration*100)+'%'; bar.style.width=(Math.max(0.5,(l.end-l.start)/state.duration*100))+'%'; if(l.id===state.selectedLayerId) bar.style.outline='2px solid rgba(255,255,255,.85)'; const play=document.createElement('div'); play.className='timelinePlayhead'; play.style.left=(state.playhead/state.duration*100)+'%'; track.append(bar,play); row.append(name,track); wrap.append(row)}}
 function drawEffectPreview(){const cv=$('#effectPreviewCanvas'); if(!cv) return; const ctx=cv.getContext('2d'); const w=cv.width,h=cv.height; const l=getSelectedLayer(); const t=(performance.now()/1000)%1.6; ctx.clearRect(0,0,w,h); ctx.fillStyle='#0f1320'; ctx.fillRect(0,0,w,h); ctx.fillStyle='rgba(255,255,255,.08)'; ctx.fillRect(16,18,w-32,h-36); if(!l){ctx.fillStyle='#d7deff';ctx.fillText('레이어 선택 시 효과 미리보기가 표시됩니다.',18,h/2); return;} const temp={id:'demo',type:'photo',x:0,y:0,scale:70,rotation:0,opacity:100,start:0,end:1.2,inEffect:l.inEffect,outEffect:'none',inDur:1.2,outDur:.5}; const st=computeVisualState(temp,t,Math.min(w,h)*.92); const boxW=120*st.scale/0.7, boxH=44*st.scale/0.7; ctx.save(); ctx.translate(w/2+st.dx*.22,h/2+st.dy*.22); ctx.rotate(st.rot); ctx.globalAlpha=clamp(st.opacity,0,1); if(st.blur) ctx.filter=`blur(${st.blur*.25}px)`; if(st.clip){ctx.beginPath(); let cw=boxW*clamp(st.clip.progress,0,1); if(st.clip.mode==='left') ctx.rect(-boxW/2,-boxH/2,cw,boxH); else if(st.clip.mode==='right') ctx.rect(boxW/2-cw,-boxH/2,cw,boxH); else ctx.rect(-cw/2,-boxH/2,cw,boxH); ctx.clip()} ctx.fillStyle='#ffffff'; ctx.strokeStyle='#ffb7d8'; ctx.lineWidth=4; const rr=14; ctx.beginPath(); ctx.moveTo(-boxW/2+rr,-boxH/2); ctx.arcTo(boxW/2,-boxH/2,boxW/2,boxH/2,rr); ctx.arcTo(boxW/2,boxH/2,-boxW/2,boxH/2,rr); ctx.arcTo(-boxW/2,boxH/2,-boxW/2,-boxH/2,rr); ctx.arcTo(-boxW/2,-boxH/2,boxW/2,-boxH/2,rr); ctx.closePath(); ctx.fill(); ctx.stroke(); ctx.fillStyle='#915df2'; ctx.font='bold 16px system-ui'; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText(l.type==='photo'?'TEXT':'EFFECT',0,1); ctx.restore(); ctx.fillStyle='#b9c5e7'; ctx.font='12px system-ui'; ctx.textAlign='left'; ctx.fillText('등장 효과: '+(PHOTO_EFFECTS.find(v=>v[0]===l.inEffect)?.[1]||l.inEffect),16,14)}
 function drawMotionPreview(){const cv=$('#motionPreviewCanvas'); if(!cv) return; const ctx=cv.getContext('2d'); const w=cv.width,h=cv.height; const l=getSelectedLayer(); const t=(performance.now()/700); ctx.clearRect(0,0,w,h); ctx.fillStyle='#0f1320'; ctx.fillRect(0,0,w,h); ctx.strokeStyle='rgba(255,255,255,.1)'; ctx.strokeRect(14,14,w-28,h-28); if(!l || (l.type!=='decor' && l.type!=='sprite')){ctx.fillStyle='#d7deff';ctx.fillText('장식 레이어 선택 시 움직임 미리보기가 표시됩니다.',18,h/2); return;} const demo={...l,x:0,y:0,start:0,end:999,scale:100}; const centerX=w/2, centerY=h/2; for(let i=0;i<Math.min(18,l.count||18);i++){const pos=particlePos(demo,i,Math.min(w,h)-40,t/2); const x=centerX + (pos.x-(Math.min(w,h)-40)/2); const y=centerY + (pos.y-(Math.min(w,h)-40)/2); if(l.type==='decor'){ drawDecorShape(ctx,l.decorKind,x,y,Math.max(4,(l.size||20)*0.35),l.colorA,l.colorB,t,pos.seed) } else { ctx.save(); ctx.translate(x,y); ctx.rotate(((l.direction||0)+(l.rotateMode==='spin'?t*60:0))*Math.PI/180); ctx.fillStyle=hexToRgba(l.tint||'#fff',Math.max(.25,(l.tintStrength||0)/100)); ctx.fillRect(-4,-4,8,8); ctx.restore() }} ctx.fillStyle='#b9c5e7'; ctx.font='12px system-ui'; ctx.textAlign='left'; const motionLabel=l.type==='decor'?({'drift':'흘러감','float':'둥둥','fall':'떨어짐','burst':'퍼짐'}[l.motion]||l.motion):'PNG 장식'; ctx.fillText('방향: '+directionLabel(l.direction||0)+' / 움직임: '+motionLabel,16,14)}
-function startUIPreviewLoop(){function frame(){drawEffectPreview();drawMotionPreview();requestAnimationFrame(frame)}requestAnimationFrame(frame)}
+function startUIPreviewLoop(){function frame(){if(!isExporting){drawEffectPreview();drawMotionPreview()}requestAnimationFrame(frame)}requestAnimationFrame(frame)}
 async function drawDecorLayer(ctx,size,layer,t){const st=computeVisualState(layer,t,size); if(!st.visible)return; ctx.save(); ctx.globalAlpha=clamp(st.opacity,0,1); if(st.blur)ctx.filter=`blur(${st.blur}px)`; for(let i=0;i<layer.count;i++){const pos=particlePos(layer,i,size,t); const r=(layer.size||20)*(layer.scale||100)/100*(.75+rand(pos.seed*5)*.5); drawDecorShape(ctx,layer.decorKind,pos.x+st.dx,pos.y+st.dy,r,layer.colorA,layer.colorB,t,pos.seed)} ctx.restore()}
 async function drawSpriteLayer(ctx,size,layer,t){const st=computeVisualState(layer,t,size); if(!st.visible)return; const img=await loadImage(layer.url); ctx.save(); ctx.globalAlpha=clamp(st.opacity,0,1); if(st.blur)ctx.filter=`blur(${st.blur}px)`; for(let i=0;i<layer.count;i++){const pos=particlePos(layer,i,size,t); const s=(layer.size||28)*(layer.scale||100)/100*(.8+rand(pos.seed*3.7)*.4); let rot=layer.rotation*Math.PI/180; if(layer.rotateMode==='follow'){rot=(layer.direction||0)*Math.PI/180} else if(layer.rotateMode==='spin'){rot=((layer.rotateSpeed||80)*t + pos.seed*30)*Math.PI/180} drawTintedSprite(ctx,img,pos.x+st.dx,pos.y+st.dy,s,rot,layer.tint,layer.tintStrength||0)} ctx.restore()}
 async function drawFrame(ctx,size,t){if(!state.frame.url)return; const img=await loadImage(state.frame.url); const sc=(state.frame.scale||100)/100; const sw=size*sc, sh=size*sc; const rot=(state.frame.rotate?(state.frame.rotateSpeed||0)*(state.frame.rotateDir||1)*t:0)*Math.PI/180; ctx.save(); ctx.translate(size/2,size/2); ctx.rotate(rot); ctx.globalAlpha=(state.frame.opacity||100)/100; ctx.drawImage(img,-sw/2,-sh/2,sw,sh); ctx.restore()}
@@ -298,21 +298,125 @@ async function renderScene(ctx,size,t){ctx.clearRect(0,0,size,size); await drawB
 function ensureMaster(){const s=state.outputSize;if(masterCanvas.width!==s||masterCanvas.height!==s){masterCanvas.width=masterCanvas.height=s;masterCtx=get2d(masterCanvas,false);masterCtx.imageSmoothingEnabled=true;masterCtx.imageSmoothingQuality='high'}}
 async function draw(){ensureMaster();renderForExport=false;await renderScene(masterCtx,state.outputSize,state.playhead);pctx.save();pctx.imageSmoothingEnabled=true;pctx.imageSmoothingQuality='high';pctx.clearRect(0,0,preview.width,preview.height);pctx.drawImage(masterCanvas,0,0,preview.width,preview.height);pctx.restore();syncStaticInputs()}
 async function exportVideo(){
-  const btn=$('#exportBtn'); btn.disabled=true; btn.textContent='고화질 저장 중...';
-  const size=state.outputSize,fps=state.fps,duration=state.duration,bitrate=state.exportBitrate||50000000;
-  const canvas=document.createElement('canvas');canvas.width=canvas.height=size;const ctx=get2d(canvas,false);ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality='high';
-  let stream=canvas.captureStream(0),track=stream.getVideoTracks()[0],manual=!!track?.requestFrame;
-  if(!manual){for(const tr of stream.getTracks())tr.stop();stream=canvas.captureStream(fps);track=stream.getVideoTracks()[0]}
-  const mimeCandidates=['video/mp4;codecs=avc1.640034','video/mp4;codecs=avc1.4D4034','video/mp4;codecs=h264','video/mp4','video/webm;codecs=vp9','video/webm'];
-  const mime=mimeCandidates.find(m=>window.MediaRecorder&&MediaRecorder.isTypeSupported(m))||''; let recorder; const chunks=[];
-  try{recorder=new MediaRecorder(stream,mime?{mimeType:mime,videoBitsPerSecond:bitrate}:{videoBitsPerSecond:bitrate})}catch(err){alert('이 브라우저에서는 영상 녹화가 지원되지 않습니다.');btn.disabled=false;btn.textContent='고화질 MP4 저장';renderForExport=false;return}
-  recorder.ondataavailable=e=>{if(e.data.size)chunks.push(e.data)};
-  recorder.onstop=()=>{const type=chunks[0]?.type||mime||'video/webm',ext=type.includes('mp4')?'mp4':'webm';download(new Blob(chunks,{type}),`profile-motion-v2.8.${ext}`);for(const tr of stream.getTracks())tr.stop();btn.disabled=false;btn.textContent='고화질 MP4 저장';renderForExport=false;draw()};
-  recorder.start();renderForExport=true;const totalFrames=Math.max(1,Math.round(duration*fps));const delay=1000/fps;
-  for(let frame=0;frame<=totalFrames;frame++){
-    const t=Math.min(duration,frame/fps);await renderScene(ctx,size,t);if(manual)track.requestFrame();btn.textContent=`저장 ${Math.round(frame/totalFrames*100)}%`;await new Promise(r=>setTimeout(r,delay));
+  const btn=$('#exportBtn');
+  if(isExporting)return;
+  isExporting=true;
+  const wasPlaying=state.playing;
+  state.playing=false;
+  if(raf){cancelAnimationFrame(raf);raf=0}
+  btn.disabled=true;
+  btn.textContent='고화질 저장 준비 중...';
+
+  const size=state.outputSize;
+  const fps=state.fps;
+  const duration=state.duration;
+  const bitrate=state.exportBitrate||50000000;
+  const frameInterval=1000/fps;
+  const canvas=document.createElement('canvas');
+  canvas.width=canvas.height=size;
+  const ctx=get2d(canvas,false);
+  ctx.imageSmoothingEnabled=true;
+  ctx.imageSmoothingQuality='high';
+
+  // 첫 프레임을 먼저 그려서 녹화 시작 시 빈 화면이 들어가는 것을 방지합니다.
+  renderForExport=true;
+  await renderScene(ctx,size,0);
+
+  // MediaRecorder의 영상 시간은 실제 경과 시간(wall clock)을 기준으로 기록됩니다.
+  // 이전 버전은 매 프레임 렌더링 시간 + 고정 sleep 시간을 둘 다 더해서
+  // 5초 영상이 약 10초로 늘어나는 문제가 있었습니다.
+  // v2.9에서는 렌더링에 이미 사용한 시간을 다음 프레임 대기시간에서 차감합니다.
+  let stream=canvas.captureStream(0);
+  let track=stream.getVideoTracks()[0];
+  let manual=!!track?.requestFrame;
+  if(!manual){
+    for(const tr of stream.getTracks())tr.stop();
+    stream=canvas.captureStream(fps);
+    track=stream.getVideoTracks()[0];
   }
+
+  const mimeCandidates=[
+    'video/mp4;codecs=avc1.640034',
+    'video/mp4;codecs=avc1.4D4034',
+    'video/mp4;codecs=h264',
+    'video/mp4',
+    'video/webm;codecs=vp9',
+    'video/webm'
+  ];
+  const mime=mimeCandidates.find(m=>window.MediaRecorder&&MediaRecorder.isTypeSupported(m))||'';
+  let recorder;
+  const chunks=[];
+  try{
+    recorder=new MediaRecorder(stream,mime?{mimeType:mime,videoBitsPerSecond:bitrate}:{videoBitsPerSecond:bitrate});
+  }catch(err){
+    alert('이 브라우저에서는 영상 녹화가 지원되지 않습니다.');
+    for(const tr of stream.getTracks())tr.stop();
+    btn.disabled=false;
+    btn.textContent='고화질 MP4 저장';
+    renderForExport=false;
+    isExporting=false;
+    if(wasPlaying){state.playing=true;lastTs=performance.now();raf=requestAnimationFrame(loop)}
+    return;
+  }
+
+  recorder.ondataavailable=e=>{if(e.data.size)chunks.push(e.data)};
+  const stopped=new Promise(resolve=>{recorder.onstop=resolve});
+  recorder.start();
+
+  const recordingStart=performance.now();
+  let frameIndex=0;
+  let lastRenderedTime=-1;
+
+  while(true){
+    const now=performance.now();
+    const elapsedMs=now-recordingStart;
+    if(elapsedMs>=duration*1000)break;
+
+    // 실제 경과시간을 모션 시간으로 사용합니다.
+    // 렌더가 잠깐 느려져도 영상 속도가 느려지지 않고, 필요한 경우 프레임만 건너뜁니다.
+    const t=Math.min(duration,elapsedMs/1000);
+    await renderScene(ctx,size,t);
+    lastRenderedTime=t;
+    if(manual&&track?.requestFrame)track.requestFrame();
+
+    frameIndex++;
+    btn.textContent=`저장 ${Math.min(99,Math.round(t/duration*100))}% · ${fps}FPS`;
+
+    // 다음 이상적인 프레임 시각까지 남은 시간만 대기합니다.
+    // 렌더 자체에 8ms가 걸렸다면 16.67ms를 또 기다리지 않고 남은 약 8.67ms만 기다립니다.
+    const nextTarget=recordingStart+frameIndex*frameInterval;
+    const waitMs=nextTarget-performance.now();
+    if(waitMs>1){
+      await new Promise(r=>setTimeout(r,waitMs));
+    }else{
+      // 렌더링이 목표 FPS보다 느린 경우 이벤트 루프에만 양보하고 즉시 다음 현재시간 프레임을 그립니다.
+      await new Promise(r=>setTimeout(r,0));
+    }
+  }
+
+  // 종료 시점에서 recorder를 즉시 멈춰 실제 영상 길이가 프로젝트 길이를 따라가도록 합니다.
+  // 마지막 렌더가 너무 오래 전인 경우에만 종료 장면을 한 번 갱신합니다.
+  if(lastRenderedTime<duration-Math.max(.05,2/fps)){
+    await renderScene(ctx,size,duration);
+    if(manual&&track?.requestFrame)track.requestFrame();
+  }
+
   recorder.stop();
+  await stopped;
+
+  const type=chunks[0]?.type||mime||'video/webm';
+  const ext=type.includes('mp4')?'mp4':'webm';
+  download(new Blob(chunks,{type}),`profile-motion-v2.9.${ext}`);
+  for(const tr of stream.getTracks())tr.stop();
+
+  btn.disabled=false;
+  btn.textContent='고화질 MP4 저장';
+  renderForExport=false;
+  isExporting=false;
+  state.playhead=0;
+  syncStaticInputs();
+  await draw();
+  if(wasPlaying){state.playing=true;lastTs=performance.now();raf=requestAnimationFrame(loop)}
 }
 setupUI(); bindUI(); refreshLayerList(); renderTimeline(); syncStaticInputs(); syncEditor(); startUIPreviewLoop(); draw();
 </script>
