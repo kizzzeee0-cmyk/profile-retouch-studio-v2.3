@@ -1,0 +1,23 @@
+{
+  "name": "profile-retouch-studio",
+  "private": true,
+  "version": "2.3.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@huggingface/transformers": "3.8.1",
+    "gifenc": "1.0.3",
+    "gl-transition": "2.1.0",
+    "gl-transitions": "1.71.0"
+  },
+  "devDependencies": {
+    "vite": "5.4.14"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

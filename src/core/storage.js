@@ -1,0 +1,9 @@
+const DB='profile-retouch-studio-v1'; const VER=1
+function open(){ return new Promise((resolve,reject)=>{ const r=indexedDB.open(DB,VER); r.onupgradeneeded=()=>{const db=r.result; if(!db.objectStoreNames.contains('assets'))db.createObjectStore('assets',{keyPath:'id'}); if(!db.objectStoreNames.contains('projects'))db.createObjectStore('projects',{keyPath:'id'})}; r.onsuccess=()=>resolve(r.result); r.onerror=()=>reject(r.error) }) }
+async function tx(store,mode,work){ const db=await open(); return new Promise((resolve,reject)=>{ const t=db.transaction(store,mode), s=t.objectStore(store); let result; try{result=work(s)}catch(e){reject(e);return} t.oncomplete=()=>resolve(result?.result ?? result); t.onerror=()=>reject(t.error) }) }
+export async function putAsset(asset){ await tx('assets','readwrite',s=>s.put(asset)); return asset }
+export async function getAssets(kind){ const db=await open(); return new Promise((resolve,reject)=>{const t=db.transaction('assets'),r=t.objectStore('assets').getAll();r.onsuccess=()=>resolve(kind?r.result.filter(x=>x.kind===kind):r.result);r.onerror=()=>reject(r.error)}) }
+export async function deleteAsset(id){ await tx('assets','readwrite',s=>s.delete(id)) }
+export async function putProject(id,data){ await tx('projects','readwrite',s=>s.put({id,data,updatedAt:Date.now()})) }
+export async function getProject(id){ const db=await open(); return new Promise((resolve,reject)=>{const r=db.transaction('projects').objectStore('projects').get(id);r.onsuccess=()=>resolve(r.result?.data??null);r.onerror=()=>reject(r.error)}) }
+export async function getRecentProjects(){ const db=await open(); return new Promise((resolve,reject)=>{const r=db.transaction('projects').objectStore('projects').getAll();r.onsuccess=()=>resolve(r.result.sort((a,b)=>b.updatedAt-a.updatedAt).slice(0,8));r.onerror=()=>reject(r.error)}) }
